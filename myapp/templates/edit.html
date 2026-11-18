@@ -1,22 +1,75 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html>
 
-<head>
-    <title>Edit Employee</title>
-    <link rel="stylesheet" href="{% static 'myapp/css/style.css' %}">
-</head>
+{% block title %}Edit {{ form.instance.name }} | Primo{% endblock %}
 
-<body>
-    <h2>Edit Employee</h2>
-    <form method="POST" action="/update/{{ employee.id }}">
+{% block content %}
+<section class="page-heading form-page-heading">
+    <div>
+        <a class="back-link" href="{% url 'user_list' %}"><span aria-hidden="true">&larr;</span> Back to people</a>
+        <p class="eyebrow"><span class="eyebrow-dot"></span> PROFILE {{ form.instance.pk|stringformat:"03d" }}</p>
+        <h1>Edit profile</h1>
+        <p class="page-subtitle">Keep {{ form.instance.name }}'s details up to date.</p>
+    </div>
+</section>
+
+<section class="form-card">
+    <div class="form-card-heading">
+        <div>
+            <span class="form-step">01 <span>/</span> 01</span>
+            <h2>Personal details</h2>
+            <p>Make any changes and save when you are ready.</p>
+        </div>
+        <div class="form-preview">
+            {% if form.instance.photo and form.instance.photo.name != "a.png" %}
+            <img src="{{ form.instance.photo.url }}" alt="" data-photo-preview>
+            {% else %}
+            <img src="{% static 'myapp/images/avatar-2.svg' %}" alt="" data-photo-preview>
+            {% endif %}
+            <span>PROFILE PHOTO</span>
+        </div>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="user-form">
         {% csrf_token %}
-        <input type="text" name="eid" value="{{ employee.eid }}"><br>
-        <input type="text" name="ename" value="{{ employee.ename }}"><br>
-        <input type="email" name="eemail" value="{{ employee.eemail }}"><br>
-        <input type="text" name="econtact" value="{{ employee.econtact }}"><br>
-        <button type="submit">Update</button>
+        {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="form-grid">
+            <div class="form-field">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                {{ form.name.errors }}
+            </div>
+            <div class="form-field">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+            <div class="form-field">
+                {{ form.mobile_number.label_tag }}
+                {{ form.mobile_number }}
+                {{ form.mobile_number.errors }}
+            </div>
+            <div class="form-field">
+                {{ form.date_of_birth.label_tag }}
+                {{ form.date_of_birth }}
+                {{ form.date_of_birth.errors }}
+            </div>
+            <div class="form-field form-field-wide">
+                {{ form.password.label_tag }}
+                {{ form.password }}
+                <small class="field-help">{{ form.password.help_text }} Passwords are never displayed.</small>
+                {{ form.password.errors }}
+            </div>
+            <div class="form-field form-field-wide photo-field">
+                {{ form.photo.label_tag }}
+                {{ form.photo }}
+                <small class="field-help">Choose a new photo to replace the current one.</small>
+                {{ form.photo.errors }}
+            </div>
+        </div>
+        <div class="form-actions">
+            <a class="button button-secondary" href="{% url 'user_list' %}">Cancel</a>
+            <button class="button button-primary" type="submit">Save changes <span aria-hidden="true">&rarr;</span></button>
+        </div>
     </form>
-</body>
-
-</html>
+</section>
+{% endblock %}

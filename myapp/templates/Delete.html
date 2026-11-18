@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Delete profile | Primo{% endblock %}
+
+{% block content %}
+<section class="page-heading form-page-heading">
+    <div>
+        <a class="back-link" href="{% url 'user_list' %}"><span aria-hidden="true">&larr;</span> Back to people</a>
+        <p class="eyebrow eyebrow-danger">REMOVE PROFILE</p>
+        <h1>Delete profile</h1>
+        <p class="page-subtitle">Please make sure this is the right person before continuing.</p>
+    </div>
+</section>
+
+<section class="delete-card">
+    <div class="delete-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m4 4v5m4-5v5"></path></svg>
+    </div>
+    <h2>Remove {{ user.name }}?</h2>
+    <p>This profile will be permanently removed from your directory. This action cannot be undone.</p>
+    <form method="post" class="delete-actions">
+        {% csrf_token %}
+        <a class="button button-secondary" href="{% url 'user_list' %}">Keep profile</a>
+        <button class="button button-danger" type="submit">Delete profile</button>
+    </form>
+</section>
+{% endblock %}

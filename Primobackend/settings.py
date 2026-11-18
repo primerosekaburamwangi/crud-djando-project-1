@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,13 +22,34 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%8hk5q8rmj$z=lbo+(9vb+-2ky37e0qm_^^k^#5gyn1c0+7*4p'
+DEBUG = os.environ.get("DJANGO_DEBUG", "true").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "local-development-key-not-for-production",
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if not DEBUG and (
+    not os.environ.get("DJANGO_SECRET_KEY")
+    or SECRET_KEY == "local-development-key-not-for-production"
+):
+    raise ImproperlyConfigured("Set DJANGO_SECRET_KEY in production.")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        "DJANGO_ALLOWED_HOSTS",
+        "localhost,127.0.0.1,[::1]" if DEBUG else "",
+    ).split(",")
+    if host.strip()
+]
+
+if not DEBUG and not ALLOWED_HOSTS:
+    raise ImproperlyConfigured("Set DJANGO_ALLOWED_HOSTS in production.")
 
 
 # Application definition
@@ -74,12 +98,44 @@ WSGI_APPLICATION = 'Primobackend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_ENGINE = os.environ.get(
+    "DB_ENGINE",
+    "django.db.backends.mysql",
+)
+
+if not DEBUG and DATABASE_ENGINE == "django.db.backends.sqlite3":
+    raise ImproperlyConfigured("Use a production database instead of SQLite.")
+
+if DATABASE_ENGINE == "django.db.backends.sqlite3":
+    DATABASES = {
+        "default": {
+            "ENGINE": DATABASE_ENGINE,
+            "NAME": os.environ.get("DB_NAME", str(BASE_DIR / "db.sqlite3")),
+        }
     }
-}
+else:
+    database_config = {
+        "NAME": os.environ.get("DB_NAME", "primobackend" if DEBUG else ""),
+        "USER": os.environ.get("DB_USER", "root" if DEBUG else ""),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "" if DEBUG else ""),
+        "HOST": os.environ.get("DB_HOST", "localhost" if DEBUG else ""),
+        "PORT": os.environ.get("DB_PORT", "3306" if DEBUG else ""),
+    }
+    if not DEBUG and any(not value for value in database_config.values()):
+        raise ImproperlyConfigured(
+            "Set DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, and DB_PORT in production."
+        )
+    if not DEBUG and database_config["USER"].lower() == "root":
+        raise ImproperlyConfigured("Do not use the MySQL root account in production.")
+    DATABASES = {
+        "default": {
+            "ENGINE": DATABASE_ENGINE,
+            **database_config,
+            "OPTIONS": {
+                "init_command": "SET sql_mode='STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'",
+            },
+        }
+    }
 
 
 # Password validation
@@ -117,13 +173,69 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
 
+MAILER_BACKEND = os.environ.get(
+    "MAILER_BACKEND",
+    "django.core.mail.backends.console.EmailBackend"
+    if DEBUG
+    else "django.core.mail.backends.smtp.EmailBackend",
+)
+MAILER_HOST = os.environ.get("MAILER_HOST", "")
+MAILER_OPTIONS = {}
+if MAILER_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+    MAILER_OPTIONS = {
+        "host": MAILER_HOST,
+        "port": int(os.environ.get("MAILER_PORT", "587")),
+        "username": os.environ.get("MAILER_USERNAME", ""),
+        "password": os.environ.get("MAILER_PASSWORD", ""),
+        "use_tls": os.environ.get("MAILER_USE_TLS", "true").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        },
+    }
 
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
+if not DEBUG and (
+    MAILER_BACKEND == "django.core.mail.backends.console.EmailBackend"
+    or (
+        MAILER_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+        and not MAILER_HOST
+    )
+):
+    raise ImproperlyConfigured(
+        "Configure MAILER_BACKEND and MAILER_HOST in production."
+    )
 
 MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
+    "default": {
+        "BACKEND": MAILER_BACKEND,
+        "OPTIONS": MAILER_OPTIONS,
+    }
 }
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    "webmaster@localhost" if DEBUG else "",
+)
+if not DEBUG and not DEFAULT_FROM_EMAIL:
+    raise ImproperlyConfigured("Set DEFAULT_FROM_EMAIL in production.")
+
+# These production defaults assume the public site is served over HTTPS.
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_HSTS_SECONDS = int(
+    os.environ.get("SECURE_HSTS_SECONDS", "31536000" if not DEBUG else "0")
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+    os.environ.get("SECURE_HSTS_INCLUDE_SUBDOMAINS", "false").strip().lower()
+    in {"1", "true", "yes", "on"}
+)
+SECURE_HSTS_PRELOAD = (
+    os.environ.get("SECURE_HSTS_PRELOAD", "false").strip().lower()
+    in {"1", "true", "yes", "on"}
+)
+SECURE_CONTENT_TYPE_NOSNIFF = True

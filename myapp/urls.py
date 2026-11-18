@@ -1,12 +1,12 @@
-from django.urls import path
+# app - urls.py
 
+from django.urls import path
 from . import views
-from django.contrib import admin
 
 urlpatterns = [
-    path("emp", views.createEmp),
-    path("show", views.show),
-    path("edit/<int:id>", views.edit),
-    path("update/<int:id>", views.update),
-    path("delete/<int:id>", views.destroy),
+    path("", views.user_list, name="user_list"),
+    path("Add/", views.AddUser, name="user_add"),
+    path("Edit/<int:id>/", views.EditUser, name="user_edit"),
+    path("Delete/<int:eid>/", views.DeleteUser, name="user_delete"),
+    path("View/<int:eid>/", views.ViewUser, name="user_view"),
 ]

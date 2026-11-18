@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add a person | Primo{% endblock %}
+
+{% block content %}
+<section class="page-heading form-page-heading">
+    <div>
+        <a class="back-link" href="{% url 'user_list' %}"><span aria-hidden="true">&larr;</span> Back to people</a>
+        <p class="eyebrow"><span class="eyebrow-dot"></span> NEW PROFILE</p>
+        <h1>Add a person</h1>
+        <p class="page-subtitle">A few details are all it takes to make a connection count.</p>
+    </div>
+</section>
+
+<section class="form-card">
+    <div class="form-card-heading">
+        <div>
+            <span class="form-step">01 <span>/</span> 01</span>
+            <h2>Personal details</h2>
+            <p>Fill in the details below. You can always update them later.</p>
+        </div>
+        <div class="form-preview">
+            <img src="{% static 'myapp/images/avatar-1.svg' %}" alt="" data-photo-preview>
+            <span>PROFILE PHOTO</span>
+        </div>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="user-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="form-grid">
+            <div class="form-field">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                {{ form.name.errors }}
+            </div>
+            <div class="form-field">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+            <div class="form-field">
+                {{ form.mobile_number.label_tag }}
+                {{ form.mobile_number }}
+                {{ form.mobile_number.errors }}
+            </div>
+            <div class="form-field">
+                {{ form.date_of_birth.label_tag }}
+                {{ form.date_of_birth }}
+                {{ form.date_of_birth.errors }}
+            </div>
+            <div class="form-field form-field-wide">
+                {{ form.password.label_tag }}
+                {{ form.password }}
+                <small class="field-help">Your password is securely hashed and never shown in the directory.</small>
+                {{ form.password.errors }}
+            </div>
+            <div class="form-field form-field-wide photo-field">
+                {{ form.photo.label_tag }}
+                {{ form.photo }}
+                <small class="field-help">Choose a clear portrait. JPG, PNG, and other supported image formats work well.</small>
+                {{ form.photo.errors }}
+            </div>
+        </div>
+        <div class="form-actions">
+            <a class="button button-secondary" href="{% url 'user_list' %}">Cancel</a>
+            <button class="button button-primary" type="submit">Create profile <span aria-hidden="true">&rarr;</span></button>
+        </div>
+    </form>
+</section>
+{% endblock %}

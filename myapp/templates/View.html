@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ user.name }} | Primo{% endblock %}
+
+{% block content %}
+<section class="page-heading form-page-heading">
+    <div>
+        <a class="back-link" href="{% url 'user_list' %}"><span aria-hidden="true">&larr;</span> Back to people</a>
+        <p class="eyebrow"><span class="eyebrow-dot"></span> PROFILE {{ user.pk|stringformat:"03d" }}</p>
+        <h1>Profile details</h1>
+    </div>
+    <a class="button button-primary" href="{% url 'user_edit' user.pk %}">Edit profile <span aria-hidden="true">&rarr;</span></a>
+</section>
+
+<section class="profile-detail-card">
+    <div class="profile-detail-banner"></div>
+    <div class="profile-detail-content">
+        <div class="profile-detail-person">
+            {% if user.photo and user.photo.name != "a.png" %}
+            <img class="profile-detail-avatar" src="{{ user.photo.url }}" alt="Photo of {{ user.name }}">
+            {% else %}
+            <img class="profile-detail-avatar" src="{% static 'myapp/images/avatar-1.svg' %}" alt="Illustrated avatar for {{ user.name }}">
+            {% endif %}
+            <div>
+                <span class="profile-status"><span></span> In your directory</span>
+                <h2>{{ user.name }}</h2>
+                <p>Member profile</p>
+            </div>
+        </div>
+        <div class="detail-panel">
+            <div class="detail-panel-heading">
+                <span class="eyebrow">CONTACT &amp; PERSONAL</span>
+                <span class="detail-panel-id">ID {{ user.pk|stringformat:"03d" }}</span>
+            </div>
+            <div class="detail-list">
+                <div class="detail-item">
+                    <span class="detail-item-icon" aria-hidden="true">@</span>
+                    <span><small>Email address</small><strong>{{ user.email }}</strong></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-icon" aria-hidden="true">+</span>
+                    <span><small>Phone number</small><strong>{{ user.mobile_number|default:"Not provided" }}</strong></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-item-icon detail-birthday" aria-hidden="true"></span>
+                    <span><small>Date of birth</small><strong>{{ user.date_of_birth|date:"F j, Y" }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
